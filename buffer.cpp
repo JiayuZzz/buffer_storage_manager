@@ -16,9 +16,16 @@ BMgr::BMgr(){
     //to be complemented
 }
 
+int BMgr::Hash(int page_id) {
+    return page_id%BUFSIZE;
+}
+
+BCB* BMgr::ptob(int page_id) {
+    return bcbs_[Hash(page_id)];
+}
+
 int BMgr::FixPage(int page_id) {
-    int bcb_id = Hash(page_id);
-    BCB* bcb = ptof_[bcb_id];
+    BCB* bcb = ptob(page_id);
     int frame_id;
 
     //page alread in buffer?
@@ -52,7 +59,7 @@ int BMgr::FixPage(int page_id) {
 int BMgr::SelectVictim() {
     int victim = lrulist_.back();
     lrulist_.pop_back();
-    BCB* bcb = ptof_[Hash(ftop_[victim])];
+    BCB* bcb = ptob(ftop_[victim]);
     while(bcb->frame_id!=victim)
         bcb = bcb->next;
     if(bcb->dirty){
@@ -63,7 +70,7 @@ int BMgr::SelectVictim() {
 }
 
 void BMgr::SetDirty(int frame_id) {
-    BCB* bcb = ptof_[Hash(ftop_[frame_id])];
+    BCB* bcb = ptob(ftop_[frame_id]);
     while(bcb!= nullptr&&bcb->frame_id!=frame_id)
         bcb = bcb->next;
     if(bcb== nullptr) {
@@ -77,8 +84,8 @@ void BMgr::SetDirty(int frame_id) {
 void BMgr::WriteDirtys() {
     BCB* bcb;
     for(int i = 0;i<BUFSIZE;i++){
-        if(ptof_[i]!= nullptr){
-            bcb = ptof_[i];
+        if(bcbs_[i]!= nullptr){
+            bcb = bcbs_[i];
             while(bcb!= nullptr){
                 if(bcb->dirty==1)
                     dsmgr_.WritePage(bcb->page_id,buf_[bcb->frame_id]);
@@ -95,4 +102,17 @@ void BMgr::PrintFrame(int frame_id) {
 
 int BMgr::NumFreeFrames() {
     return (int)free_frame.size();
+}
+
+void BMgr::RemoveBCB(BCB *bcb) {
+    BCB* head = ptob(bcb->page_id);
+    if(head==bcb){
+        head==bcb->next;
+        delete bcb;
+    } else {
+        while(head->next!=bcb)
+            head = head->next;
+        head->next = bcb->next;
+        delete bcb;
+    }
 }

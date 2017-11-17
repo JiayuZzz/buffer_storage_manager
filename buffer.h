@@ -38,9 +38,10 @@ private:
     void UnsetDirty(int frame_id);
     void WriteDirtys();
     void PrintFrame(int frame_id);
+    BCB* ptob(int page_id);         //hash page_id to bcb
 
-    int ftop_[BUFSIZE];             //frame_id to page_id
-    BCB* ptof_[BUFSIZE];            //page_ed to bcb
+    int ftop_[BUFSIZE];             //hash frame_id to page_id
+    BCB* bcbs_[BUFSIZE];            //block control block
     std::list<int> lrulist_;       //used frames
     std::vector<int> free_frame;  //free frames
     bFrame buf_[BUFSIZE];         //buffer
