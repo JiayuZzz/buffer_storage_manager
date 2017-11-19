@@ -10,17 +10,8 @@ DSMgr::DSMgr(){
     //to be completed
 }
 
-int DSMgr::CreateFile(std::string filename) {
-    //to be completed
-    return 0;
-}
-
 int DSMgr::OpenFile(std::string filename) {
-    if(access(filename.c_str(),0)==-1)
-        CreateFile(filename);
-    currFile_ = fopen(filename.c_str(),"r+");
-    if(currFile_== nullptr) return -1;
-    return 0;
+    //to be completed
 }
 
 int DSMgr::Seek(long offset) {
@@ -32,17 +23,21 @@ int DSMgr::CloseFile() {
     return 0;
 }
 
+long DSMgr::PageOffset(int page_id) {
+    return page_id*PAGESIZE;
+}
+
 bFrame DSMgr::ReadPage(int page_id) {
     bFrame frm;
     //find page
-    Seek(poffset[page_id]);
+    Seek(PageOffset(page_id));
     fread(frm.filed,FRAMESIZE,1,currFile_);
     return frm;
 }
 
 int DSMgr::WritePage(int page_id, bFrame frm) {
     //find page
-    Seek(poffset[page_id]);
+    Seek(PageOffset(page_id));
     int bytes = fwrite(frm.filed,FRAMESIZE,1,currFile_);
     fflush(currFile_);
     return bytes;
@@ -53,6 +48,7 @@ FILE* DSMgr::GetFile(){
 }
 
 void DSMgr::IncNumPages(){
+    pages_.push_back(0);
     numPages_++;
 }
 
@@ -60,7 +56,7 @@ int DSMgr::GetNumPages(){
     return numPages_;
 }
 
-void DSMgr::SetUse(int page_id, int use_bit) {
+void DSMgr::SetUse(int page_id, char use_bit) {
     pages_[page_id] = use_bit;
 }
 

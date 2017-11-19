@@ -32,12 +32,12 @@ int BMgr::FixPage(int page_id) {
     while(bcb!= nullptr){
         if(bcb->page_id==page_id)
             break;
+        bcb = bcb->next;
     }
     if(bcb!= nullptr){
         frame_id = bcb->frame_id;
         lrulist_.remove(frame_id);
         lrulist_.push_front(frame_id);
-        ftop_[frame_id] = page_id;
     }else{
         //any free frames?
         if(free_frame.empty()){
@@ -52,13 +52,54 @@ int BMgr::FixPage(int page_id) {
             bcb = new BCB(page_id,frame_id);
         }
         buf_[frame_id] = dsmgr_.ReadPage(page_id);
+        ftop_[frame_id] = page_id;
     }
+    if(++bcb->count==1) bcb->latch= true;
     return frame_id;
 }
 
+NewPage BMgr::FixNewPage(){
+    NewPage np;
+    int page_id;
+    int num_pages = dsmgr_.GetNumPages();
+    for(page_id = 0;page_id<num_pages;page_id++){
+        if(dsmgr_.GetUse(page_id)==0)
+            break;
+    }
+    if(page_id==num_pages) {
+        dsmgr_.IncNumPages();
+        dsmgr_.SetUse(page_id,1);
+    }
+    np.page_id = page_id;
+    np.frame_id = FixPage(page_id);
+    return np;
+}
+
+int BMgr::UnfixPage(int page_id) {
+    BCB* bcb = ptob(page_id);
+    while(bcb->page_id!=page_id) bcb = bcb->next;
+    if(--bcb->count==0) bcb->latch = false;
+    return bcb->frame_id;
+}
+
 int BMgr::SelectVictim() {
-    int victim = lrulist_.back();
-    lrulist_.pop_back();
+    //int victim = lrulist_.back();
+    //lrulist_.pop_back();
+    auto it = --lrulist_.end();     //search victim from end of lru
+    BCB* bcb = ptob(ftop_[*it]);
+    while(true){
+        while(bcb->frame_id!=*it)
+            bcb = bcb->next;
+        if(bcb->latch) --it;
+        else {
+            int victim = *it;
+            if(bcb->dirty)
+                dsmgr_.WritePage(bcb->page_id,buf_[victim]);
+            RemoveBCB(bcb);
+            return victim;
+        }
+    }
+    /*  no latch
     BCB* bcb = ptob(ftop_[victim]);
     while(bcb->frame_id!=victim)
         bcb = bcb->next;
@@ -67,6 +108,7 @@ int BMgr::SelectVictim() {
     }
     RemoveBCB(bcb);
     return victim;
+     */
 }
 
 void BMgr::SetDirty(int frame_id) {
@@ -97,7 +139,7 @@ void BMgr::WriteDirtys() {
 }
 
 void BMgr::PrintFrame(int frame_id) {
-    //to be completed
+    printf("%s\n",buf_[frame_id].filed);
 }
 
 int BMgr::NumFreeFrames() {
@@ -107,7 +149,7 @@ int BMgr::NumFreeFrames() {
 void BMgr::RemoveBCB(BCB *bcb) {
     BCB* head = ptob(bcb->page_id);
     if(head==bcb){
-        head==bcb->next;
+        head=bcb->next;
         delete bcb;
     } else {
         while(head->next!=bcb)

@@ -15,17 +15,22 @@ struct BCB{
     BCB(int page_id, int frame_id);
     int page_id;
     int frame_id;
-    int latch;
+    bool latch;
     int count;
-    int dirty;
+    char dirty;
     BCB *next;
+};
+
+struct NewPage{
+    int page_id;
+    int frame_id;
 };
 
 class BMgr{
 public:
     BMgr();
     int FixPage(int page_id);
-    void FixNewPage();
+    NewPage FixNewPage();           // allocate a new page to record, and return page_id and frame_id
     int UnfixPage(int page_id);
     int NumFreeFrames();
 private:
