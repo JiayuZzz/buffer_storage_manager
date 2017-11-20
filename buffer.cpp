@@ -3,16 +3,20 @@
 //
 
 #include "buffer.h"
-#include <iostream>
+#include <cstdio>
 
 using namespace std;
 
 
 BCB::BCB(int p, int f) :page_id(p),frame_id(f){
-
 }
 
 BMgr::BMgr(){
+    for(int i = 0;i<BUFSIZE;i++) {
+        free_frame_.push_back(i);        //init free frame
+        ftop_[i] = -1;
+    }
+
     //to be complemented
 }
 
@@ -24,10 +28,13 @@ BCB* BMgr::ptob(int page_id) {
     return bcbs_[Hash(page_id)];
 }
 
+void BMgr::RemoveLRUEle(int frame_id) {
+    lrulist_.remove(frame_id);
+}
+
 int BMgr::FixPage(int page_id) {
     BCB* bcb = ptob(page_id);
     int frame_id;
-
     //page alread in buffer?
     while(bcb!= nullptr){
         if(bcb->page_id==page_id)
@@ -36,22 +43,23 @@ int BMgr::FixPage(int page_id) {
     }
     if(bcb!= nullptr){
         frame_id = bcb->frame_id;
-        lrulist_.remove(frame_id);
+        RemoveLRUEle(frame_id);
         lrulist_.push_front(frame_id);
     }else{
         //any free frames?
-        if(free_frame.empty()){
+        if(free_frame_.empty()){
+            printf("fixpage1\n");
             frame_id = SelectVictim();
             bcb = new BCB(page_id,frame_id);
-            lrulist_.remove(frame_id);
+            RemoveLRUEle(frame_id);
             lrulist_.push_front(frame_id);
         } else {
             //get free frame
-            frame_id = free_frame.back();
-            free_frame.pop_back();
+            frame_id = free_frame_.back();
+            free_frame_.pop_back();
             bcb = new BCB(page_id,frame_id);
         }
-        buf_[frame_id] = dsmgr_.ReadPage(page_id);
+        buf_[frame_id] = dsmgr.ReadPage(page_id);
         ftop_[frame_id] = page_id;
     }
     if(++bcb->count==1) bcb->latch= true;
@@ -61,14 +69,14 @@ int BMgr::FixPage(int page_id) {
 NewPage BMgr::FixNewPage(){
     NewPage np;
     int page_id;
-    int num_pages = dsmgr_.GetNumPages();
+    int num_pages = dsmgr.GetNumPages();
     for(page_id = 0;page_id<num_pages;page_id++){
-        if(dsmgr_.GetUse(page_id)==0)
+        if(dsmgr.GetUse(page_id)=='0')
             break;
     }
     if(page_id==num_pages) {
-        dsmgr_.IncNumPages();
-        dsmgr_.SetUse(page_id,1);
+        dsmgr.IncNumPages();
+        dsmgr.SetUse(page_id,'1');
     }
     np.page_id = page_id;
     np.frame_id = FixPage(page_id);
@@ -94,7 +102,7 @@ int BMgr::SelectVictim() {
         else {
             int victim = *it;
             if(bcb->dirty)
-                dsmgr_.WritePage(bcb->page_id,buf_[victim]);
+                dsmgr.WritePage(bcb->page_id,buf_[victim]);
             RemoveBCB(bcb);
             return victim;
         }
@@ -104,7 +112,7 @@ int BMgr::SelectVictim() {
     while(bcb->frame_id!=victim)
         bcb = bcb->next;
     if(bcb->dirty){
-        dsmgr_.WritePage(bcb->page_id,buf_[victim]);
+        dsmgr.WritePage(bcb->page_id,buf_[victim]);
     }
     RemoveBCB(bcb);
     return victim;
@@ -116,7 +124,7 @@ void BMgr::SetDirty(int frame_id) {
     while(bcb!= nullptr&&bcb->frame_id!=frame_id)
         bcb = bcb->next;
     if(bcb== nullptr) {
-        cerr<<"no such frame!"<<endl;
+        printf("No such frame!\n");
         return;
     }
     bcb->dirty = 1;
@@ -130,12 +138,12 @@ void BMgr::WriteDirtys() {
             bcb = bcbs_[i];
             while(bcb!= nullptr){
                 if(bcb->dirty==1)
-                    dsmgr_.WritePage(bcb->page_id,buf_[bcb->frame_id]);
+                    dsmgr.WritePage(bcb->page_id,buf_[bcb->frame_id]);
                 bcb = bcb->next;
             }
         }
     }
-    dsmgr_.CloseFile();
+    dsmgr.CloseFile();
 }
 
 void BMgr::PrintFrame(int frame_id) {
@@ -143,7 +151,7 @@ void BMgr::PrintFrame(int frame_id) {
 }
 
 int BMgr::NumFreeFrames() {
-    return (int)free_frame.size();
+    return (int)free_frame_.size();
 }
 
 void BMgr::RemoveBCB(BCB *bcb) {
