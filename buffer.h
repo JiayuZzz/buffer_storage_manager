@@ -13,6 +13,7 @@
 
 struct BCB{
     BCB(int page_id, int frame_id);
+    BCB();
     int page_id;
     int frame_id;
     bool latch;
@@ -45,9 +46,11 @@ private:
     void RemoveBCB(BCB* bcb);
     void RemoveLRUEle(int frame_id);
     BCB* ptob(int page_id);         //hash page_id to bcb
+    BCB* AllocFrame(int page_id);
 
     int ftop_[BUFSIZE];             //hash frame_id to page_id
     BCB* bcbs_[BUFSIZE];            //block control block
+    BCB* ftob_[BUFSIZE];
     std::list<int> lrulist_;       //used frames
     std::vector<int> free_frame_;  //free frames
     bFrame buf_[BUFSIZE];         //buffer

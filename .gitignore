@@ -1,5 +1,7 @@
 .idea
-data.dbf
+*.dbf
 doc.txt
 CMake*
 cmake*
+test
+*.dSYM
