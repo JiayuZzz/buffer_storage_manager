@@ -24,6 +24,7 @@ int main(){
     int page;
     int frame_id;
     uint64_t time = 0;
+    int cnt = 0;
     Timer timer;                  //get cost
 
     while(fscanf(trace,"%d,%d",&operation,&page)){
@@ -32,12 +33,13 @@ int main(){
         frame_id = buffer.FixPage(page);
         printf("hello6\n");
         if(operation==1){
-            buffer.SetDirty(frame_id);
             printf("hello7\n");
+            buffer.SetDirty(frame_id);
         }
         buffer.UnfixPage(page);
         printf("hello8\n");
         time+=timer.Elapsed();       // get time of this request
+        printf("%d\n",++cnt);
     }
     timer.Start();
     buffer.WriteDirtys();
