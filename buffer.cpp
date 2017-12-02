@@ -38,7 +38,6 @@ BCB* BMgr::AllocFrame(int page_id) {
     int frame_id;
     BCB* bcb;
     if(free_frame_.empty()){
-        printf("fixpage1\n");
         frame_id = SelectVictim();
         RemoveLRUEle(frame_id);
     } else {
@@ -59,34 +58,27 @@ int BMgr::FixPage(int page_id) {
     int frame_id;
     //page alread in buffer?
     if(bcb== nullptr){
-        printf("bcbnull\n");
         bcbs_[Hash(page_id)] = AllocFrame(page_id);
         bcb = ptob(page_id);
         frame_id = bcb->frame_id;
     } else {
-        printf("bcbnotnull\n");
         while (bcb->next!= nullptr) {
-            printf("11\n");
             if (bcb->page_id == page_id)
                 break;
             bcb = bcb->next;
-            printf("22\n");
         }
         if (bcb->page_id == page_id) {
-            printf("in frame\n");
             frame_id = bcb->frame_id;
             RemoveLRUEle(frame_id);
             lrulist_.push_front(frame_id);
         } else {
             //any free frames?
-            printf("outframe\n");
             bcb->next = AllocFrame(page_id);
             bcb = bcb->next;
             frame_id = bcb->frame_id;
         }
     }
     if(++bcb->count==1) bcb->latch= true;
-    printf("return\n");
     return frame_id;
 }
 
@@ -109,7 +101,8 @@ NewPage BMgr::FixNewPage(){
 
 int BMgr::UnfixPage(int page_id) {
     BCB* bcb = ptob(page_id);
-    while(bcb->page_id!=page_id) bcb = bcb->next;
+    while(bcb!= nullptr&&bcb->page_id!=page_id) bcb = bcb->next;
+    if(bcb== nullptr) return -1;
     if(--bcb->count==0) bcb->latch = false;
     return bcb->frame_id;
 }
@@ -145,7 +138,6 @@ int BMgr::SelectVictim() {
 void BMgr::SetDirty(int frame_id) {
     BCB* bcb = ftob_[frame_id];
     if(bcb== nullptr) {
-        printf("No such frame!\n");
         return;
     }
     bcb->dirty = 1;
@@ -176,10 +168,9 @@ int BMgr::NumFreeFrames() {
 }
 
 void BMgr::RemoveBCB(BCB *bcb) {
-    printf("remove");
     BCB* head = ptob(bcb->page_id);
     if(head==bcb){
-        head=bcb->next;
+        bcbs_[Hash(bcb->page_id)]=bcb->next;
         delete bcb;
     } else {
         while(head->next!=bcb)

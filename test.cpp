@@ -13,13 +13,9 @@ using namespace std;
 
 int main(){
     BMgr buffer;
-    printf("hello\n");
     buffer.dsmgr.CreateNPagesFile(MAXPAGES,"data.dbf");      // create file for experiment
-    printf("hello2\n");
     buffer.dsmgr.OpenFile("data.dbf");
-    printf("hello3\n");
     FILE* trace = fopen("zipfian.txt","r");
-    printf("hello4\n");
     int operation;
     int page;
     int frame_id;
@@ -27,25 +23,21 @@ int main(){
     int cnt = 0;
     Timer timer;                  //get cost
 
-    while(fscanf(trace,"%d,%d",&operation,&page)){
+    while(fscanf(trace,"%d,%d",&operation,&page)!=EOF){
         timer.Start();                 // timing
-        printf("hello5\n");
         frame_id = buffer.FixPage(page);
-        printf("hello6\n");
         if(operation==1){
-            printf("hello7\n");
             buffer.SetDirty(frame_id);
         }
         buffer.UnfixPage(page);
-        printf("hello8\n");
         time+=timer.Elapsed();       // get time of this request
-        printf("%d\n",++cnt);
+            printf("operation count : %d\n",cnt++);
     }
     timer.Start();
     buffer.WriteDirtys();
     buffer.dsmgr.CloseFile();
     time+=timer.Elapsed();
-    printf("Completed!\nTime cost: %.2lfs",time/1000000.0);
+    printf("Completed!\nTime cost: %.2lfs\n",time/1000000.0);
 
     return 0;
 }
