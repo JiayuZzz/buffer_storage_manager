@@ -31,7 +31,7 @@ int main(){
         }
         buffer.UnfixPage(page);
         time+=timer.Elapsed();       // get time of this request
-            printf("operation count : %d\n",cnt++);
+        printf("operation count : %d\n",cnt++);
     }
     timer.Start();
     buffer.WriteDirtys();
