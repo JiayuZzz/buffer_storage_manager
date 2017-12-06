@@ -42,15 +42,14 @@ public:
 private:
     //internal functions
     int SelectVictim();
-    int Hash(int page_id);
     void RemoveBCB(BCB* bcb);
     void RemoveLRUEle(int frame_id);
     BCB* ptob(int page_id);         //hash page_id to bcb
+    int Hash(int page_id);
     BCB* AllocFrame(int page_id);
 
-    int ftop_[BUFSIZE];             //hash frame_id to page_id
     BCB* bcbs_[BUFSIZE];            //block control block
-    BCB* ftob_[BUFSIZE];
+    BCB* ftob_[BUFSIZE];            //map frame_id to bcb
     std::list<int> lrulist_;       //used frames
     std::vector<int> free_frame_;  //free frames
     bFrame buf_[BUFSIZE];         //buffer
