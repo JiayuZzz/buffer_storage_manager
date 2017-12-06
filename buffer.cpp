@@ -16,9 +16,7 @@ BCB::BCB():page_id(-1),frame_id(-1),next(nullptr),dirty(0),latch(false),count(0)
 BMgr::BMgr(){
     for(int i = 0;i<BUFSIZE;i++) {
         free_frame_.push_back(i);        //init free frame
-        ftop_[i] = -1;
     }
-
     //to be complemented
 }
 
@@ -33,7 +31,7 @@ BCB* BMgr::ptob(int page_id) {
 void BMgr::RemoveLRUEle(int frame_id) {
     lrulist_.remove(frame_id);
 }
-
+/*
 BCB* BMgr::AllocFrame(int page_id) {
     int frame_id;
     BCB* bcb;
@@ -49,10 +47,57 @@ BCB* BMgr::AllocFrame(int page_id) {
     lrulist_.push_front(frame_id);
     ftob_[frame_id] = bcb;
     ftop_[frame_id] = page_id;
+    //if first bcb in bucket is victim and be removed
+    if(ptob(page_id)== nullptr)
+        bcbs_[Hash(page_id)] = bcb;
     buf_[frame_id] = dsmgr.ReadPage(page_id);
     return bcb;
 }
+*/
+BCB* BMgr::AllocFrame(int page_id) {
+    int frame_id;
+    BCB* bcb = ptob(page_id);
+    if(free_frame_.empty()){
+        frame_id = SelectVictim();
+        RemoveLRUEle(frame_id);
+    } else {
+        //get free frame
+        frame_id = free_frame_.back();
+        free_frame_.pop_back();
+    }
 
+    BCB* newBcb = new BCB(page_id,frame_id);
+    if(bcb== nullptr) bcbs_[Hash(page_id)] = newBcb;
+    else {
+        while(bcb->next!= nullptr)
+            bcb = bcb->next;
+        bcb->next = newBcb;
+    }
+    ftob_[frame_id] = newBcb;
+    lrulist_.push_front(frame_id);
+    buf_[frame_id] = dsmgr.ReadPage(page_id);
+    return newBcb;
+}
+
+int BMgr::FixPage(int page_id) {
+    BCB* bcb = ptob(page_id);
+    int frame_id;
+    while(bcb!= nullptr){
+        if(bcb->page_id==page_id) break;
+        bcb = bcb->next;
+    }
+    if(bcb!= nullptr){
+        frame_id = bcb->frame_id;
+        RemoveLRUEle(frame_id);
+        lrulist_.push_front(frame_id);
+    } else {
+        bcb = AllocFrame(page_id);
+        frame_id = bcb->frame_id;
+    }
+    if(++bcb->count==1) bcb->latch= true;
+    return frame_id;
+}
+/*
 int BMgr::FixPage(int page_id) {
     BCB* bcb = ptob(page_id);
     int frame_id;
@@ -81,6 +126,9 @@ int BMgr::FixPage(int page_id) {
     if(++bcb->count==1) bcb->latch= true;
     return frame_id;
 }
+ */
+
+
 
 NewPage BMgr::FixNewPage(){
     NewPage np;
@@ -102,8 +150,7 @@ NewPage BMgr::FixNewPage(){
 int BMgr::UnfixPage(int page_id) {
     BCB* bcb = ptob(page_id);
     while(bcb!= nullptr&&bcb->page_id!=page_id) bcb = bcb->next;
-    if(bcb== nullptr) return -1;
-    if(--bcb->count==0) bcb->latch = false;
+    if(--(bcb->count)==0) bcb->latch = false;
     return bcb->frame_id;
 }
 
