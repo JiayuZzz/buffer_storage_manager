@@ -6,7 +6,10 @@
 #include <cstdio>
 #include <unistd.h>
 
-DSMgr::DSMgr():basePages_((MAXPAGES+PAGESIZE-1)/PAGESIZE){}
+DSMgr::DSMgr():basePages_((MAXPAGES+PAGESIZE-1)/PAGESIZE){
+    printf("Max pages:%d, buff size: %d, frame size: %d",MAXPAGES,BUFSIZ,FRAMESIZE);
+    printf("Base pages for usage array: %d\n",basePages_);
+}
 
 int DSMgr::OpenFile(const char* filename) {
     currFile_ = fopen(filename,"r+");

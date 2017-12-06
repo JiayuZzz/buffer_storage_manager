@@ -5,3 +5,4 @@ CMake*
 cmake*
 test
 *.dSYM
+*.out
