@@ -7,7 +7,7 @@
 #include <unistd.h>
 
 DSMgr::DSMgr():basePages_((MAXPAGES+PAGESIZE-1)/PAGESIZE){
-    printf("Max pages:%d, buff size: %d, frame size: %d",MAXPAGES,BUFSIZ,FRAMESIZE);
+    printf("Max pages:%d, buff size: %d, frame size: %d\n",MAXPAGES,BUFSIZ,FRAMESIZE);
     printf("Base pages for usage array: %d\n",basePages_);
 }
 

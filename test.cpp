@@ -14,9 +14,11 @@ extern int hit;
 
 int main(){
     BMgr buffer;
+    printf("\nInitializing database file......");
     buffer.dsmgr.CreateNPagesFile(MAXPAGES,"data.dbf");      // create file for experiment
+    printf("complete\n\n");
     buffer.dsmgr.OpenFile("data.dbf");
-    FILE* trace = fopen("/home/wujy/work/buffer_storage_manager/zipfian.txt","r");
+    FILE* trace = fopen("./zipfian.txt","r");
     int operation;
     int page;
     int frame_id;
