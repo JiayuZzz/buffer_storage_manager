@@ -7,9 +7,9 @@
 
 using namespace std;
 
-int readPage = 0;
-int writeDirty = 0;
-int hit = 0;
+int readPage = 0;             //记录读IO
+int writeDirty = 0;           //记录写IO
+int hit = 0;                  //记录buffer命中
 
 BCB::BCB(int p, int f) :page_id(p),frame_id(f),next(nullptr),dirty(0),latch(false),count(0){
 }
@@ -77,7 +77,7 @@ int BMgr::FixPage(int page_id) {
         RemoveLRUEle(frame_id);
         lrulist_.push_front(frame_id);
     } else {
-        bcb = AllocFrame(page_id);
+        bcb = AllocFrame(page_id);             //为page分配frame
         frame_id = bcb->frame_id;
     }
     if(++bcb->count==1) bcb->latch= true;
@@ -88,7 +88,7 @@ NewPage BMgr::FixNewPage(){
     NewPage np;
     int page_id;
     int num_pages = dsmgr.GetNumPages();
-    for(page_id = 0;page_id<num_pages;page_id++){
+    for(page_id = 0;page_id<num_pages;page_id++){   //寻找未使用的page
         if(dsmgr.GetUse(page_id)=='0')
             break;
     }
@@ -109,9 +109,8 @@ int BMgr::UnfixPage(int page_id) {
 }
 
 int BMgr::SelectVictim() {
-    //int victim = lrulist_.back();
-    //lrulist_.pop_back();
-    list<int>::iterator it = --lrulist_.end();     //search victim whitch lauch is false from end of lru
+
+    list<int>::iterator it = --lrulist_.end();   //从lru末尾开始寻找latch为false的frame
     BCB* bcb;
     while(true){
         bcb = ftob_[*it];
@@ -122,7 +121,7 @@ int BMgr::SelectVictim() {
                 dsmgr.WritePage(bcb->page_id, buf_[victim]);
                 ++writeDirty;
             }
-            RemoveBCB(bcb);
+            RemoveBCB(bcb);                                     //删除该frame的BCB
             return victim;
         }
     }

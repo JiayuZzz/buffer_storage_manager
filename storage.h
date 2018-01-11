@@ -11,6 +11,7 @@
 #define FRAMESIZE 4096
 #define PAGESIZE 4096
 #define MAXPAGES 50000
+#define BUFSIZE 1024
 
 struct bFrame{
     char filed[FRAMESIZE];
@@ -19,24 +20,24 @@ struct bFrame{
 class DSMgr{
 public:
     DSMgr();
-    int OpenFile(const char* filename);
-    int CloseFile();
-    int CreateNPagesFile(int n,const char* filename);        //create a n pages file for experiment
-    bFrame ReadPage(int page_id);
-    int WritePage(int page_id, bFrame frm);
-    int Seek(long offset);
-    FILE* GetFile();
-    void IncNumPages();
-    int GetNumPages();
-    void SetUse(int index, char use_bit);
-    long PageOffset(int page_id);
-    char GetUse(int index);
+    int OpenFile(const char* filename);                  //打开文件，若文件不存在则创建新文件
+    int CloseFile();                                     //关闭文件
+    int CreateNPagesFile(int n,const char* filename);    //为实验创建一个n页的数据库
+    bFrame ReadPage(int page_id);                        //将某页读入内存
+    int WritePage(int page_id, bFrame frm);              //将frame中的内容写回文件页中
+    long PageOffset(int page_id);                        //计算页号在文件中的偏移量
+    int Seek(long offset);                               //根据页偏移量定位页位置
+    FILE* GetFile();                                     //获得数据库文件指针
+    void IncNumPages();                                  //增加已使用的总页数
+    int GetNumPages();                                   //获得总页数
+    void SetUse(int index, char use_bit);                //将某位标记成已使用或未使用，1为已使用0为未使用
+    char GetUse(int index);                              //返回某页是否已被使用
 
 private:
-    FILE* currFile_;
-    int numPages_;
-    int basePages_;             //file pages num for store usage array
-    char pages_[MAXPAGES];      //page usage array
+    FILE* currFile_;                                     //该manager所打开的数据库文件指针
+    int numPages_;                                       //总页数
+    int basePages_;                                      //usage array在文件开头所占的页数
+    char pages_[MAXPAGES];                               //usage array，记录各页是否被占用
 };
 
 #endif //LAB_STORAGE_H

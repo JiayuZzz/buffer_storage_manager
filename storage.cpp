@@ -4,10 +4,9 @@
 
 #include "storage.h"
 #include <cstdio>
-#include <unistd.h>
 
 DSMgr::DSMgr():basePages_((MAXPAGES+PAGESIZE-1)/PAGESIZE){
-    printf("Max pages:%d, buff size: %d, frame size: %d\n",MAXPAGES,BUFSIZ,FRAMESIZE);
+    printf("Max pages:%d, buffer size: %d, frame size: %d\n",MAXPAGES,BUFSIZE,FRAMESIZE);
     printf("Base pages for usage array: %d\n",basePages_);
 }
 
@@ -22,7 +21,6 @@ int DSMgr::OpenFile(const char* filename) {
     numPages_ = (fileSize+PAGESIZE-1)/PAGESIZE - basePages_;
     fread(pages_,numPages_,1,currFile_);     //read usage array
     return 0;
-    //to be completed
 }
 
 int DSMgr::Seek(long offset) {
